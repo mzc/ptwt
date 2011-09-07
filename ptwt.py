@@ -80,10 +80,13 @@ def interactive(twitter):
         sys.stdout.write('>>> ')
         try:
             cmd_args = string.split(raw_input())
-        except EOFError:
+        except:
             print
             return
-    
+
+        if not cmd_args:
+            continue
+        
         cmd, args = cmd_args[0], cmd_args[1:]
         try:
             commands[cmd](twitter, args)
