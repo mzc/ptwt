@@ -102,6 +102,15 @@ def public_timeline(twitter, args):
     jsons = statuses.public_timeline(conn)
     print_timeline(jsons, verbose)
 
+def print_lists(jsons, verbose):
+    for json in jsons:
+        slug = json['slug']
+        des = json['description']
+        if verbose:
+            print '%s: \"%s\"' % (slug, des)
+        else:
+            print '%s' % slug
+
 def lists(twitter, args):
     lists = twitter.lists()
 
@@ -117,20 +126,20 @@ def lists(twitter, args):
             verbose = True
         else:
             assert False, 'unexcepted option'
-    
-    if args:
-        screen_name = args[0]
-        jsons = lists.all(conn, screen_name = screen_name)
+
+    if len(args) >= 2:
+        # get the timeline of the specified list
+        owner_screen_name, slug = args[0], args[1]
+        jsons = lists.statuses(conn, owner_screen_name = owner_screen_name, slug = slug)
+        print_timeline(jsons, verbose)
     else:
-        jsons = lists.all(conn)
-    
-    for json in jsons:
-        slug = json['slug']
-        des = json['description']
-        if verbose:
-            print '%s: \"%s\"' % (slug, des)
+        # get all the lists of a specified user
+        if args:
+            screen_name = args[0]
+            jsons = lists.all(conn, screen_name = screen_name)
         else:
-            print '%s' % slug
+            jsons = lists.all(conn)
+        print_lists(jsons, verbose)
 
 def auth_single():
     global conn
