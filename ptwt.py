@@ -21,6 +21,7 @@ commands = {
     'htl' : lambda twitter, args: home_timeline(twitter, args),
     'utl' : lambda twitter, args: user_timeline(twitter, args),
     'ptl' : lambda twitter, args: public_timeline(twitter, args),
+    'u'   : lambda twitter, args: users_lookup(twitter, args),
 }
 
 def usage():
@@ -105,9 +106,9 @@ def public_timeline(twitter, args):
 def print_lists(jsons, verbose):
     for json in jsons:
         slug = json['slug']
-        des = json['description']
+        description = json['description']
         if verbose:
-            print '%s: \"%s\"' % (slug, des)
+            print '%s: %s' % (slug, description)
         else:
             print '%s' % slug
 
@@ -140,6 +141,44 @@ def lists(twitter, args):
         else:
             jsons = lists.all(conn)
         print_lists(jsons, verbose)
+    
+def print_users(jsons, verbose):
+    for json in jsons:
+        screen_name = json['screen_name']
+        name = json['name']
+        location = json['location']
+        created_at = json['created_at']
+        description = json['description']
+        time_zone = json['time_zone']
+        if verbose:
+            print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
+            print 'Description: %s' % description
+        else:
+            print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
+    
+def users_lookup(twitter, args):
+    users = twitter.users()
+
+    try:
+        opts, args = getopt.getopt(args, 'v')
+    except getopt.GetoptError:
+        usage()
+        return
+
+    verbose = False
+    for o, a in opts:
+        if o == '-v':
+            verbose = True
+        else:
+            assert False, 'unexcepted option'
+
+    if not args:
+        usage()
+        return
+
+    screen_names = string.join(args, ',')
+    jsons = users.lookup(conn, screen_name = screen_names)
+    print_users(jsons, verbose)
 
 def auth_single():
     global conn
