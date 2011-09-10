@@ -42,7 +42,7 @@ def print_timeline(jsons, verbose):
             print '%s: %s' % (screen_name, text)
     
 def home_timeline(twitter, args):
-    statuses = twitter.statuses()
+    statuses = twitter.Statuses()
 
     try:
         opts, args = getopt.getopt(args, 'v')
@@ -61,7 +61,7 @@ def home_timeline(twitter, args):
     print_timeline(jsons, verbose)
 
 def user_timeline(twitter, args):
-    statuses = twitter.statuses()
+    statuses = twitter.Statuses()
 
     try:
         opts, args = getopt.getopt(args, 'v')
@@ -85,7 +85,7 @@ def user_timeline(twitter, args):
     print_timeline(jsons, verbose)
         
 def public_timeline(twitter, args):
-    statuses = twitter.statuses()
+    statuses = twitter.Statuses()
     
     try:
         opts, args = getopt.getopt(args, 'v')
@@ -113,7 +113,7 @@ def print_lists(jsons, verbose):
             print '%s' % slug
 
 def lists(twitter, args):
-    lists = twitter.lists()
+    lists = twitter.Lists()
 
     try:
         opts, args = getopt.getopt(args, 'v')
@@ -157,7 +157,7 @@ def print_users(jsons, verbose):
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
     
 def users_lookup(twitter, args):
-    users = twitter.users()
+    users = twitter.Users()
 
     try:
         opts, args = getopt.getopt(args, 'v')
