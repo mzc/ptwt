@@ -29,6 +29,25 @@ commands = {
 def usage():
     print 'usage: TODO'
 
+def check_json_error(json):
+    try:
+        if json.has_key('errors'):
+            return json['errors'][0]['message']
+        elif json.has_key('error'):
+            return json['error']
+        else:
+            return False
+    except:
+        return False
+
+def prompt_error(json):
+    error = check_json_error(json)
+    if error:
+        print error
+        return True
+    else:
+        return False
+
 def print_timeline(jsons, verbose):
     for json in jsons:
         screen_name = json['user']['screen_name']
@@ -60,7 +79,8 @@ def home_timeline(twitter, args):
             assert False, 'unexcepted option'
 
     jsons = statuses.home_timeline(conn)
-    print_timeline(jsons, verbose)
+    if not prompt_error(jsons):
+        print_timeline(jsons, verbose)
 
 def user_timeline(twitter, args):
     statuses = twitter.Statuses()
@@ -83,8 +103,9 @@ def user_timeline(twitter, args):
         jsons = statuses.user_timeline(conn, screen_name = screen_name)
     else:
         jsons = statuses.user_timeline(conn)
-    
-    print_timeline(jsons, verbose)
+
+    if not prompt_error(jsons):
+        print_timeline(jsons, verbose)
         
 def public_timeline(twitter, args):
     statuses = twitter.Statuses()
@@ -103,7 +124,8 @@ def public_timeline(twitter, args):
             assert False, 'unexcepted option'
 
     jsons = statuses.public_timeline(conn)
-    print_timeline(jsons, verbose)
+    if not prompt_error(jsons):
+        print_timeline(jsons, verbose)
 
 def print_lists(jsons, verbose):
     for json in jsons:
@@ -134,7 +156,8 @@ def lists(twitter, args):
         # get the timeline of the specified list
         owner_screen_name, slug = args[0], args[1]
         jsons = lists.statuses(conn, owner_screen_name = owner_screen_name, slug = slug)
-        print_timeline(jsons, verbose)
+        if not prompt_error(jsons):
+            print_timeline(jsons, verbose)
     else:
         # get all the lists of a specified user
         if args:
@@ -142,7 +165,9 @@ def lists(twitter, args):
             jsons = lists.all(conn, screen_name = screen_name)
         else:
             jsons = lists.all(conn)
-        print_lists(jsons, verbose)
+
+        if not prompt_error(jsons):
+            print_lists(jsons, verbose)
     
 def print_users(jsons, verbose):
     for json in jsons:
@@ -190,7 +215,8 @@ def users_lookup(twitter, args):
         return
 
     jsons = users_lookup_by_screen_name(users, args)
-    print_users(jsons, verbose)
+    if not prompt_error(jsons):
+        print_users(jsons, verbose)
 
 def friends(twitter, args):
     friends = twitter.Friends()
@@ -213,11 +239,16 @@ def friends(twitter, args):
         users_int = friends.ids(conn, screen_name = screen_names)
     else:
         users_int = friends.ids(conn)
+        
+    if prompt_error(users_int):
+        return
+
     users_string = map(str, users_int)
     
     users = twitter.Users()
     jsons = users_lookup_by_user_id(users, users_string)
-    print_users(jsons, verbose)
+    if not prompt_error(jsons):
+        print_users(jsons, verbose)
 
 def followers(twitter, args):
     followers = twitter.Followers()
@@ -240,11 +271,16 @@ def followers(twitter, args):
         users_int = followers.ids(conn, screen_name = screen_names)
     else:
         users_int = followers.ids(conn)
+
+    if prompt_error(users_int):
+        return
+
     users_string = map(str, users_int)
     
     users = twitter.Users()
     jsons = users_lookup_by_user_id(users, users_string)
-    print_users(jsons, verbose)
+    if not prompt_error(jsons):
+        print_users(jsons, verbose)
 
 def auth_single():
     global conn
