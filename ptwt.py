@@ -22,6 +22,7 @@ commands = {
     'utl' : lambda twitter, args: user_timeline(twitter, args),
     'ptl' : lambda twitter, args: public_timeline(twitter, args),
     'u'   : lambda twitter, args: users_lookup(twitter, args),
+    'fr'  : lambda twitter, args: friends(twitter, args),
 }
 
 def usage():
@@ -156,6 +157,16 @@ def print_users(jsons, verbose):
         else:
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
     
+def users_lookup_by_screen_name(users, args):
+    screen_names = string.join(args, ',')
+    jsons = users.lookup(conn, screen_name = screen_names)
+    return jsons
+
+def users_lookup_by_user_id(users, args):
+    user_id = string.join(args[0:100], ',') # TODO: improve it
+    jsons = users.lookup(conn, user_id = user_id)
+    return jsons
+
 def users_lookup(twitter, args):
     users = twitter.Users()
 
@@ -171,13 +182,38 @@ def users_lookup(twitter, args):
             verbose = True
         else:
             assert False, 'unexcepted option'
-
     if not args:
         usage()
         return
 
-    screen_names = string.join(args, ',')
-    jsons = users.lookup(conn, screen_name = screen_names)
+    jsons = users_lookup_by_screen_name(users, args)
+    print_users(jsons, verbose)
+
+def friends(twitter, args):
+    friends = twitter.Friends()
+    
+    try:
+        opts, args = getopt.getopt(args, 'v')
+    except getopt.GetoptError:
+        usage()
+        return
+
+    verbose = False
+    for o, a in opts:
+        if o == '-v':
+            verbose = True
+        else:
+            assert False, 'unexcepted option'
+
+    if args:
+        screen_names = args[0]
+        users_int = friends.ids(conn, screen_name = screen_names)
+    else:
+        users_int = friends.ids(conn)
+    users_string = map(str, users_int)
+    
+    users = twitter.Users()
+    jsons = users_lookup_by_user_id(users, users_string)
     print_users(jsons, verbose)
 
 def auth_single():
