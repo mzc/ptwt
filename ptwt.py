@@ -148,13 +148,15 @@ def print_users(jsons, verbose):
     for json in jsons:
         screen_name = json['screen_name']
         name = json['name']
+        id_str = json['id_str']
         location = json['location']
         created_at = json['created_at']
         description = json['description']
         time_zone = json['time_zone']
         if verbose:
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
-            print 'Description: %s' % description
+            print '\tID: %s' % id_str
+            print '\tDesc: %s' % description
         else:
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
     
