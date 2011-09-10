@@ -181,6 +181,7 @@ def print_users(jsons, verbose):
         if verbose:
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
             print '\tID: %s' % id_str
+            print '\tCreated at: %s' % created_at
             print '\tDesc: %s' % description
         else:
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
