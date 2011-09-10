@@ -23,6 +23,7 @@ commands = {
     'ptl' : lambda twitter, args: public_timeline(twitter, args),
     'u'   : lambda twitter, args: users_lookup(twitter, args),
     'fr'  : lambda twitter, args: friends(twitter, args),
+    'fo'  : lambda twitter, args: followers(twitter, args),
 }
 
 def usage():
@@ -210,6 +211,33 @@ def friends(twitter, args):
         users_int = friends.ids(conn, screen_name = screen_names)
     else:
         users_int = friends.ids(conn)
+    users_string = map(str, users_int)
+    
+    users = twitter.Users()
+    jsons = users_lookup_by_user_id(users, users_string)
+    print_users(jsons, verbose)
+
+def followers(twitter, args):
+    followers = twitter.Followers()
+    
+    try:
+        opts, args = getopt.getopt(args, 'v')
+    except getopt.GetoptError:
+        usage()
+        return
+
+    verbose = False
+    for o, a in opts:
+        if o == '-v':
+            verbose = True
+        else:
+            assert False, 'unexcepted option'
+
+    if args:
+        screen_names = args[0]
+        users_int = followers.ids(conn, screen_name = screen_names)
+    else:
+        users_int = followers.ids(conn)
     users_string = map(str, users_int)
     
     users = twitter.Users()
