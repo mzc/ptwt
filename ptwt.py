@@ -1,28 +1,29 @@
 #!/usr/bin/env python
 
 import sys
-import httplib2
 import string
 import getopt
+import subprocess
 
 from secret import *
-from restapi import OAuth_Single
+from restapi import OAuthOOB, OAuthConn
 from restapi import Client
 
-conn = None
+REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
+AUTHENTICATE_URL  = "https://api.twitter.com/oauth/authenticate"
+ACCESS_TOKEN_URL  = "https://api.twitter.com/oauth/access_token"
 
 commands = {
-    'help': lambda twitter, args: usage(),
-    'exit': lambda twitter, args: quit(),
-    'quit': lambda twitter, args: quit(),
-    'auth': lambda twitter, args: auth_single(),
-    'ls'  : lambda twitter, args: lists(twitter, args),
-    'htl' : lambda twitter, args: home_timeline(twitter, args),
-    'utl' : lambda twitter, args: user_timeline(twitter, args),
-    'ptl' : lambda twitter, args: public_timeline(twitter, args),
-    'u'   : lambda twitter, args: users_lookup(twitter, args),
-    'fr'  : lambda twitter, args: friends(twitter, args),
-    'fo'  : lambda twitter, args: followers(twitter, args),
+    'help': lambda oauth_conn, twitter, args: usage(),
+    'exit': lambda oauth_conn, twitter, args: quit(),
+    'quit': lambda oauth_conn, twitter, args: quit(),
+    'ls'  : lambda oauth_conn, twitter, args: lists(oauth_conn, twitter, args),
+    'htl' : lambda oauth_conn, twitter, args: home_timeline(oauth_conn, twitter, args),
+    'utl' : lambda oauth_conn, twitter, args: user_timeline(oauth_conn, twitter, args),
+    'ptl' : lambda oauth_conn, twitter, args: public_timeline(oauth_conn, twitter, args),
+    'u'   : lambda oauth_conn, twitter, args: users_lookup(oauth_conn, twitter, args),
+    'fr'  : lambda oauth_conn, twitter, args: friends(oauth_conn, twitter, args),
+    'fo'  : lambda oauth_conn, twitter, args: followers(oauth_conn, twitter, args),
 }
 
 def usage():
@@ -61,7 +62,7 @@ def print_timeline(jsons, verbose):
         else:
             print '%s: %s' % (screen_name, text)
     
-def home_timeline(twitter, args):
+def home_timeline(oauth_conn, twitter, args):
     statuses = twitter.Statuses()
 
     try:
@@ -77,11 +78,11 @@ def home_timeline(twitter, args):
         else:
             assert False, 'unexcepted option'
 
-    jsons = statuses.home_timeline(conn)
+    jsons = statuses.home_timeline(oauth_conn)
     if not prompt_error(jsons):
         print_timeline(jsons, verbose)
 
-def user_timeline(twitter, args):
+def user_timeline(oauth_conn, twitter, args):
     statuses = twitter.Statuses()
 
     try:
@@ -99,14 +100,14 @@ def user_timeline(twitter, args):
 
     if args:
         screen_name = args[0]
-        jsons = statuses.user_timeline(conn, screen_name = screen_name)
+        jsons = statuses.user_timeline(oauth_conn, screen_name = screen_name)
     else:
-        jsons = statuses.user_timeline(conn)
+        jsons = statuses.user_timeline(oauth_conn)
 
     if not prompt_error(jsons):
         print_timeline(jsons, verbose)
         
-def public_timeline(twitter, args):
+def public_timeline(oauth_conn, twitter, args):
     statuses = twitter.Statuses()
     
     try:
@@ -122,7 +123,7 @@ def public_timeline(twitter, args):
         else:
             assert False, 'unexcepted option'
 
-    jsons = statuses.public_timeline(conn)
+    jsons = statuses.public_timeline(oauth_conn)
     if not prompt_error(jsons):
         print_timeline(jsons, verbose)
 
@@ -135,7 +136,7 @@ def print_lists(jsons, verbose):
         else:
             print '%s' % slug
 
-def lists(twitter, args):
+def lists(oauth_conn, twitter, args):
     lists = twitter.Lists()
 
     try:
@@ -154,16 +155,16 @@ def lists(twitter, args):
     if len(args) >= 2:
         # get the timeline of the specified list
         owner_screen_name, slug = args[0], args[1]
-        jsons = lists.statuses(conn, owner_screen_name = owner_screen_name, slug = slug)
+        jsons = lists.statuses(oauth_conn, owner_screen_name = owner_screen_name, slug = slug)
         if not prompt_error(jsons):
             print_timeline(jsons, verbose)
     else:
         # get all the lists of a specified user
         if args:
             screen_name = args[0]
-            jsons = lists.all(conn, screen_name = screen_name)
+            jsons = lists.all(oauth_conn, screen_name = screen_name)
         else:
-            jsons = lists.all(conn)
+            jsons = lists.all(oauth_conn)
 
         if not prompt_error(jsons):
             print_lists(jsons, verbose)
@@ -185,17 +186,17 @@ def print_users(jsons, verbose):
         else:
             print '%s: %s at %s (%s)' % (screen_name, name, location, time_zone)
     
-def users_lookup_by_screen_name(users, args):
+def users_lookup_by_screen_name(oauth_conn, users, args):
     screen_names = string.join(args, ',')
-    jsons = users.lookup(conn, screen_name = screen_names)
+    jsons = users.lookup(oauth_conn, screen_name = screen_names)
     return jsons
 
-def users_lookup_by_user_id(users, args):
+def users_lookup_by_user_id(oauth_conn, users, args):
     user_id = string.join(args[0:100], ',') # TODO: improve it
-    jsons = users.lookup(conn, user_id = user_id)
+    jsons = users.lookup(oauth_conn, user_id = user_id)
     return jsons
 
-def users_lookup(twitter, args):
+def users_lookup(oauth_conn, twitter, args):
     users = twitter.Users()
 
     try:
@@ -214,11 +215,11 @@ def users_lookup(twitter, args):
         usage()
         return
 
-    jsons = users_lookup_by_screen_name(users, args)
+    jsons = users_lookup_by_screen_name(oauth_conn, users, args)
     if not prompt_error(jsons):
         print_users(jsons, verbose)
 
-def friends(twitter, args):
+def friends(oauth_conn, twitter, args):
     friends = twitter.Friends()
     
     try:
@@ -236,9 +237,9 @@ def friends(twitter, args):
 
     if args:
         screen_names = args[0]
-        users_int = friends.ids(conn, screen_name = screen_names)
+        users_int = friends.ids(oauth_conn, screen_name = screen_names)
     else:
-        users_int = friends.ids(conn)
+        users_int = friends.ids(oauth_conn)
         
     if prompt_error(users_int):
         return
@@ -246,11 +247,11 @@ def friends(twitter, args):
     users_string = map(str, users_int)
     
     users = twitter.Users()
-    jsons = users_lookup_by_user_id(users, users_string)
+    jsons = users_lookup_by_user_id(oauth_conn, users, users_string)
     if not prompt_error(jsons):
         print_users(jsons, verbose)
 
-def followers(twitter, args):
+def followers(oauth_conn, twitter, args):
     followers = twitter.Followers()
     
     try:
@@ -268,9 +269,9 @@ def followers(twitter, args):
 
     if args:
         screen_names = args[0]
-        users_int = followers.ids(conn, screen_name = screen_names)
+        users_int = followers.ids(oauth_conn, screen_name = screen_names)
     else:
-        users_int = followers.ids(conn)
+        users_int = followers.ids(oauth_conn)
 
     if prompt_error(users_int):
         return
@@ -278,18 +279,11 @@ def followers(twitter, args):
     users_string = map(str, users_int)
     
     users = twitter.Users()
-    jsons = users_lookup_by_user_id(users, users_string)
+    jsons = users_lookup_by_user_id(oauth_conn, users, users_string)
     if not prompt_error(jsons):
         print_users(jsons, verbose)
 
-def auth_single():
-    global conn
-    try:
-        conn = OAuth_Single(CONSUMER_KEY, CONSUMER_SECRET, TOKEN_KEY, TOKEN_SECRET)
-    except Exception:
-        print 'Failed'
-
-def interactive(twitter):
+def interactive(oauth_conn, twitter):
     while True:
         sys.stdout.write('>>> ')
         try:
@@ -303,26 +297,39 @@ def interactive(twitter):
         
         cmd, args = cmd_args[0], cmd_args[1:]
         try:
-            commands[cmd](twitter, args)
+            commands[cmd](oauth_conn, twitter, args)
         except KeyError:
             print 'Unknow command:', cmd
 
-def one_shot(twitter):
+def one_shot(oauth_conn, twitter):
     cmd, args = sys.argv[1], sys.argv[2:]
 
     try:
-        auth_single()
-        commands[cmd](twitter, args)
+        commands[cmd](oauth_conn, twitter, args)
     except KeyError:
         print 'Unknow command:', cmd
+
+def authorize():
+    oauth_oob = OAuthOOB(REQUEST_TOKEN_URL, AUTHENTICATE_URL, ACCESS_TOKEN_URL)
+    oauth_conn = OAuthConn(CONSUMER_KEY, CONSUMER_SECRET)
+    oauth_conn = oauth_oob.get_temp_credentials(oauth_conn)
+    
+    subprocess.call(['chromium', oauth_oob.temp_credentials_url])
+    sys.stdout.write('PIN:')
+    pin_code = raw_input()
+    
+    oauth_conn = oauth_oob.get_credentials(oauth_conn, pin_code)
+    
+    return oauth_conn
         
 def main():
     twitter = Client('twitter')
+    oauth_conn = authorize()
 
     if len(sys.argv) == 1:
-        interactive(twitter)
+        interactive(oauth_conn, twitter)
     else:
-        one_shot(twitter)
+        one_shot(oauth_conn, twitter)
         
 if __name__ == '__main__':
     main()
