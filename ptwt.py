@@ -33,8 +33,21 @@ commands = {
     'fo'  : lambda oauth_conn, twitter, args: followers(oauth_conn, twitter, args),
 }
 
+prog_name = None
+
 def usage():
-    print 'usage: TODO'
+    print 'usage: ' + prog_name + ' <command> [<args>]'
+    print 'The commands supported are:'
+    print '    help             Show this usage'
+    print '    exit/quit        Quit this program'
+    print '    ls  [USER]       Show user\'s list'
+    print '    ls  USER LIST    Show timeline of user\'s list'
+    print '    htl              Show yours home timeline'
+    print '    utl [USER]       Show user\'s user timeline'
+    print '    ptl              Show public timetline'
+    print '    u   USER         Show user\'s personal information'
+    print '    fr  [USER]       Show whom the user are following'
+    print '    fo  [USER]       Show who are following the user'
 
 def check_entity_error(entity):
     try:
@@ -306,7 +319,7 @@ def interactive(oauth_conn, twitter):
         try:
             commands[cmd](oauth_conn, twitter, args)
         except KeyError:
-            print 'Unknow command:', cmd
+            usage()
 
 def one_shot(oauth_conn, twitter):
     cmd, args = sys.argv[1], sys.argv[2:]
@@ -314,7 +327,7 @@ def one_shot(oauth_conn, twitter):
     try:
         commands[cmd](oauth_conn, twitter, args)
     except KeyError:
-        print 'Unknow command:', cmd
+        usage()
 
 def authorize_oob():
     oauth_oob = OAuthOOB(REQUEST_TOKEN_URL, AUTHENTICATE_URL, ACCESS_TOKEN_URL)
@@ -363,6 +376,9 @@ def authorize(settings):
     return oauth_conn
         
 def main():
+    global prog_name
+    
+    prog_name = sys.argv[0]
     settings_dir = os.getenv('HOME') + '/.config/ptwt/' 
     settings =  settings_dir + 'settings'
     try:
