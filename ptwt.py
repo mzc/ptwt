@@ -319,13 +319,23 @@ def one_shot(oauth_conn, twitter):
 def authorize_oob():
     oauth_oob = OAuthOOB(REQUEST_TOKEN_URL, AUTHENTICATE_URL, ACCESS_TOKEN_URL)
     oauth_conn = OAuthConn(CONSUMER_KEY, CONSUMER_SECRET)
-    oauth_conn = oauth_oob.get_temp_credentials(oauth_conn)
+
+    try:
+        oauth_conn = oauth_oob.get_temp_credentials(oauth_conn)
+    except Exception, e:
+        print e
+        exit(1)
     
     subprocess.call(['chromium', oauth_oob.temp_credentials_url])
     sys.stdout.write('PIN: ')
     pin_code = raw_input()
+
+    try:
+        oauth_conn = oauth_oob.get_credentials(oauth_conn, pin_code)
+    except Exception, e:
+        print e
+        exit(1)
     
-    oauth_conn = oauth_oob.get_credentials(oauth_conn, pin_code)
     return oauth_conn
 
 def authorize(settings):
