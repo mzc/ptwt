@@ -1,1 +1,20 @@
-A command line twitter client
+A command line twitter client for Python
+
+Install
+-------
+    git clone https://github.com/mzc/ptwt.git
+
+Usage
+-----
+    ./ptwt help
+
+    or
+
+    ./ptwt
+    >>> help
+
+    For first time usage, out-of-band authorization is needed.
+    A opening web-browser will show a pin-code. 
+    Please copy and type it in console after the prompt PIN: XXXXXXX
+
+    Configuration file is stored in ~/.config/ptwt/settings
