@@ -393,10 +393,13 @@ def main():
     twitter = Client('twitter')
     oauth_conn = authorize(settings)
 
-    if len(sys.argv) == 1:
-        interactive(oauth_conn, twitter)
-    else:
-        one_shot(oauth_conn, twitter)
+    try:
+        if len(sys.argv) == 1:
+            interactive(oauth_conn, twitter)
+        else:
+            one_shot(oauth_conn, twitter)
+    except Exception, e:
+        print e
         
 if __name__ == '__main__':
     main()
