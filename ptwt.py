@@ -339,7 +339,7 @@ def authorize_oob():
         print e
         exit(1)
     
-    subprocess.call(['chromium', oauth_oob.temp_credentials_url])
+    subprocess.call(['xdg-open', oauth_oob.temp_credentials_url])
     sys.stdout.write('PIN: ')
     pin_code = raw_input()
 
